@@ -1,20 +1,23 @@
 ---
 title: "Homepage"
 summary: "About this page."
-date: 2023-03-06
+date: 2023-08-12
 layout: default
 ---
 ![Researcher Portrait](assets/images/SixieYu.jpg)
 
 
 
-My research interests are machine learning, game theory and optimization.
-
-I obtained my Ph.D. from the Computer Science Department at [Washington University in St. Louis](https://cse.wustl.edu/), worked with [Professor Vorobeychik](http://vorobeychik.com/).
 
 
+I received my Ph.D. from the Computer Science Department at [Washington University in St. Louis](https://cse.wustl.edu/) under the supervision of [Professor Vorobeychik](http://vorobeychik.com/).
 
-<!-- [CV](https://www.dropbox.com/s/w4myzj8isb6skhp/Sixie_Yu_CV.pdf?dl=0) -->
+My research interests include machine learning and game theory.
+
+The aim of my research is to develop computational methods that achieve the following:
+- Ensure the trustworthiness of machine learning models through game theory concepts.
+- Learn the behavior of autonomous agents from data.
+- Direct agents' behavior towards social good.
 
 Email: \[First Name\].\[Last Name\]@wustl.edu
 <br>

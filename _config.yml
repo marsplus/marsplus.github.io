@@ -3,7 +3,9 @@ description: Personal website
 menu:
  - page: Research
    url: /research
- - page: Random Stuff
+ # - page: Random Stuff
+ #   url: /notes
+ - page: Notes
    url: /notes
 mathjax: true
 markdown: kramdown

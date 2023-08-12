@@ -46,8 +46,9 @@ body {
 	font-family: Palatino, "Palatino Linotype", "Palatino LT STD", "Book Antiqua", Georgia, serif;
 	line-height: 1.8;
 	background-color: rgb(241, 241, 241);
+	font-size: 1.1em;
 }
-body p {font-size: 1.1em;}
+body p {font-size: 1.3em;}
 body blockquote p {font-size: 1.4em;}
 
 /* Ensure full-height columns */
@@ -168,7 +169,10 @@ nav[role="navigation"] .pure-toggle-icon:after {
 
 /* Structure various elements */
 main article {padding: 2em;}
-form, ol, p, ul {margin-bottom: 1em;}
+form, ol, p, ul {
+	margin-bottom: 1em;
+	font-size: 1.3em;
+}
 hr {
 	border-top: 1px solid #eceeef;
 	border-width: 0;
