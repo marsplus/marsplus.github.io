@@ -1,0 +1,17 @@
+name: Sixie Yu
+description: Personal website
+menu:
+ - page: Research
+   url: /research
+ - page: Random Stuff
+   url: /notes
+mathjax: true
+markdown: kramdown
+encoding: utf-8
+# baseurl: "marsplus.github.io"
+baseurl: ""
+locale: en_GB
+
+sass:
+  sass_dir: css
+  style:    expanded
