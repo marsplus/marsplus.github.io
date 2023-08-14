@@ -16,8 +16,8 @@ My research interests include machine learning and game theory.
 
 The aim of my research is to develop computational methods that achieve the following:
 - Ensure the trustworthiness of machine learning models through game theory concepts.
-- Learn the behavior of autonomous agents from data.
-- Direct agents' behavior towards social good.
+- Learn the behavior of strategic agents from data.
+- Design strategic agents' behavior towards social good.
 
 Email: \[First Name\].\[Last Name\]@wustl.edu
 <br>
