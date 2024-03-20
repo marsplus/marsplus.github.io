@@ -4,7 +4,7 @@ summary: "About this page."
 date: 2023-08-12
 layout: default
 ---
-![Researcher Portrait](assets/images/SixieYu.jpg)
+![Researcher Portrait](assets/images/img.jpg)
 
 
 
