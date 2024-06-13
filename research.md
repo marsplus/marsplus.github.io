@@ -5,6 +5,8 @@ date: 2023-08-12
 layout: default
 ---
 
+#### Preprint
+- Zonglin Di, **Sixie Yu**, Yevgeniy Vorobeychik, Yang Liu ["Adversarial Machine Unlearning"](https://arxiv.org/abs/2406.07687)[**[code]**](https://github.com/marsplus/SG-Unlearn)
 
 #### Trustworthy ML
 - Chen Hajaj, **Sixie Yu**, Zlatko Joveski, Yifan Guo, Yevgeniy Vorobeychik ["Adversarial Coordination on Social Networks"](https://dl.acm.org/citation.cfm?id=3331866) (**AAMAS 2019**)
