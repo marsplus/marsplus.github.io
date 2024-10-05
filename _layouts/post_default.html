@@ -1,20 +1,62 @@
 <!DOCTYPE html>
-<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- Site Title -->
+    <title>{{ page.title }} | {{ site.title }}</title>
 
-  {% include head.html %}
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
 
-  <body>
+    <!-- MathJax for LaTeX support -->
+    <script type="text/javascript" async>
+        window.MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
 
-    {% include header.html %}
+</head>
+<body>
+    <header class="site-header">
+        <h1 class="site-title"><a href="{{ site.baseurl }}/">{{ site.title }}</a></h1>
+    </header>
 
-    <main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        {{ content }}
-      </div>
+    <main class="site-content">
+        <article class="post">
+            <header class="post-header">
+                <h1 class="post-title">{{ page.title }}</h1>
+                <p class="post-date"><em>{{ page.date | date: "%B %d, %Y" }}</em></p>
+            </header>
+
+            <!-- Prevent Jekyll from interfering with MathJax rendering -->
+            <section class="post-content" markdown="0">
+                {{ content }}
+            </section>
+
+<!--             <footer class="post-footer">
+                {% if page.categories %}
+                    <p>Categories: {{ page.categories | join: ", " }}</p>
+                {% endif %}
+                {% if page.tags %}
+                    <p>Tags: {{ page.tags | join: ", " }}</p>
+                {% endif %}
+            </footer> -->
+        </article>
     </main>
 
-    {% include footer.html %}
-
-  </body>
-
+    <footer class="site-footer">
+        <p>&copy; {{ site.time | date: '%Y' }} {{ site.title }}</p>
+    </footer>
+</body>
 </html>

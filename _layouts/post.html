@@ -1,25 +1,51 @@
----
-layout: post_default
----
-<article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title }}</title>
 
-  <header class="post-header">
-    {% if page.external-url %}
-      <h1 class="post-title" itemprop="name headline"><a href="{{ page.external-url }}">{{ page.title | escape }} &rarr;</a></h1>
-    {% else %}
-      <h1 class="post-title" itemprop="name headline">{{ page.title | escape }}</h1>
-    {% endif %}
-    <p class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">{{ page.date | date: "%b %-d, %Y" }}</time>{% if page.author %} • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ page.author }}</span></span>{% endif %}{% if page.categories != empty or page.tags != empty %}{% include category_links.html categories=page.categories tags=page.tags %}{% endif %}</p>
-  </header>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
 
-  <div class="post-content" itemprop="articleBody">
-    {{ content }}
-  </div>
+    <!-- MathJax for LaTeX support -->
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
 
-  {% if site.comments == true and page.comments != false %}
-    <div class="post-comments" itemprop="comment">
-      {% include custom_comments_provider.html %}
-    </div>
-  {% endif %}
+</head>
+<body>
+    <header>
+        <h1>{{ site.title }}</h1>
+        <nav>
+            <a href="{{ '/' | relative_url }}">Home</a>
+            <a href="{{ site.baseurl }}/about">About</a>
+        </nav>
+    </header>
 
-</article>
+    <main>
+        <article>
+            <h1>{{ page.title }}</h1>
+            <p><em>{{ page.date | date: "%B %d, %Y" }}</em></p>
+            
+            <!-- Render the blog post content -->
+            {{ content }}
+
+            <!-- Optional: If you want to show categories or tags -->
+            {% if page.categories %}
+              <p>Categories: {{ page.categories | join: ", " }}</p>
+            {% endif %}
+            {% if page.tags %}
+              <p>Tags: {{ page.tags | join: ", " }}</p>
+            {% endif %}
+        </article>
+    </main>
+
+    <footer>
+        <p>&copy; {{ site.time | date: "%Y" }} {{ site.title }}</p>
+    </footer>
+
+    <!-- Optional: Analytics or other scripts -->
+    {{ site.google_analytics }}
+</body>
+</html>

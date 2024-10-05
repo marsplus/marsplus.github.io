@@ -13,7 +13,7 @@ encoding: utf-8
 # baseurl: "marsplus.github.io"
 baseurl: ""
 locale: en_GB
-
+mathjax: true
 sass:
   sass_dir: css
   style:    expanded
