@@ -10,7 +10,7 @@ layout: default
 
 
 
-I work at a startup called [Stellar Cyber](https://stellarcyber.ai/) on machine learning and security..
+I work at [Stellar Cyber](https://stellarcyber.ai/), a startup empowering security with AI.
 I received my Ph.D. from the Computer Science Department at [Washington University in St. Louis](https://cse.wustl.edu/) under the supervision of [Professor Vorobeychik](http://vorobeychik.com/).
 
 My research interests include machine learning and game theory.
