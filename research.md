@@ -5,10 +5,9 @@ date: 2023-08-12
 layout: default
 ---
 
-#### Preprint
-- Zonglin Di, **Sixie Yu**, Yevgeniy Vorobeychik, Yang Liu ["Adversarial Machine Unlearning"](https://arxiv.org/abs/2406.07687) [**[code]**](https://github.com/marsplus/SG-Unlearn)
 
 #### Trustworthy ML
+- Zonglin Di, **Sixie Yu**, Yevgeniy Vorobeychik, Yang Liu ["Adversarial Machine Unlearning"](https://arxiv.org/abs/2406.07687) (**ICLR 2025**) [**[code]**](https://github.com/marsplus/SG-Unlearn)
 - Chen Hajaj, **Sixie Yu**, Zlatko Joveski, Yifan Guo, Yevgeniy Vorobeychik ["Adversarial Coordination on Social Networks"](https://dl.acm.org/citation.cfm?id=3331866) (**AAMAS 2019**)
 - Liang Tong\*, **Sixie Yu**\*, Scott Alfeld, Yevgeniy Vorobeychik. ["Adversarial Regression with Multiple Learners"](https://arxiv.org/abs/1806.02256) (**ICML 2018**) [**[code]**](https://github.com/marsplus/Adversarial-Regression-with-Multiple-Learners) (\* Equal Contribution)
 <!-- [**[video]**](https://vimeo.com/287807252) [**[slides]**](assets/slides/icml18.pdf) [**[code]**](https://github.com/marsplus/Adversarial-Regression-with-Multiple-Learners)   -->
