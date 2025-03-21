@@ -7,7 +7,7 @@ layout: default
 
 
 #### Trustworthy ML
-- Zonglin Di, **Sixie Yu**, Yevgeniy Vorobeychik, Yang Liu ["Adversarial Machine Unlearning"](https://arxiv.org/abs/2406.07687) (**ICLR 2025**) [**[code]**](https://github.com/marsplus/SG-Unlearn)
+- Zonglin Di\*, **Sixie Yu**\*, Yevgeniy Vorobeychik, Yang Liu ["Adversarial Machine Unlearning"](https://arxiv.org/abs/2406.07687) (**ICLR 2025**) [**[code]**](https://github.com/marsplus/SG-Unlearn) (\* Equal Contribution)
 - Liang Tong\*, **Sixie Yu**\*, Scott Alfeld, Yevgeniy Vorobeychik. ["Adversarial Regression with Multiple Learners"](https://arxiv.org/abs/1806.02256) (**ICML 2018**) [**[code]**](https://github.com/marsplus/Adversarial-Regression-with-Multiple-Learners) (\* Equal Contribution)
 <!-- [**[video]**](https://vimeo.com/287807252) [**[slides]**](assets/slides/icml18.pdf) [**[code]**](https://github.com/marsplus/Adversarial-Regression-with-Multiple-Learners)   -->
 - **Sixie Yu**, Yevgeniy Vorobeychik, Scott Alfeld. ["Adversarial Classification on Social Networks"](https://arxiv.org/abs/1801.08159) (**AAMAS 2018**) 
