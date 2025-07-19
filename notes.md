@@ -1,9 +1,10 @@
 ---
 title: "Notes"
 summary: "About this page."
-date: 2024-12-07
+date: 2025-07-18
 layout: default
 ---
+- [PageRank for DAGs](https://www.notion.so/PageRank-for-DAGs-23541a916dff80deb3e9f5b937ab59f2?source=copy_link)
 - [Direct Preference Optimization from the lens of Calculus of Variations](https://www.overleaf.com/read/ccqfngmvbqyb#1dae78)
 <!-- - [Needle: a minimalist auto-differentiation framework](https://github.com/marsplus/cmu-10741-needle/blob/main/needle_exp.ipynb) -->
 - [Formulating a sorting problem as a linear program](https://www.overleaf.com/read/qstzxdqvhfts#7c894c)
