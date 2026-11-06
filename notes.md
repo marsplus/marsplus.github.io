@@ -4,9 +4,9 @@ summary: "About this page."
 date: 2026-11-06
 layout: default
 ---
-- [Tuning SOC Triage with GEPA: When More Isn’t Better](https://mini-knave-8da.notion.site/40f41a916dff81099e7fef7eab2724e6)
+- [Tuning SOC triage with GEPA: when more isn’t better](https://mini-knave-8da.notion.site/40f41a916dff81099e7fef7eab2724e6)
 - [PageRank for DAGs](https://www.notion.so/PageRank-for-DAGs-23541a916dff80deb3e9f5b937ab59f2?source=copy_link)
-- [Direct Preference Optimization from the lens of Calculus of Variations](https://www.overleaf.com/read/ccqfngmvbqyb#1dae78)
+- [Direct preference optimization from the lens of calculus of variations](https://www.overleaf.com/read/ccqfngmvbqyb#1dae78)
 <!-- - [Needle: a minimalist auto-differentiation framework](https://github.com/marsplus/cmu-10741-needle/blob/main/needle_exp.ipynb) -->
 - [Formulating a sorting problem as a linear program](https://www.overleaf.com/read/qstzxdqvhfts#7c894c)
 <!-- - [A quick demo of Tweedie's formula](https://colab.research.google.com/drive/1kUVs5wE17FzDjbClzcdbXKm_3DAoVZAT?usp=sharing) -->
