@@ -4,7 +4,7 @@ summary: "About this page."
 date: 2026-11-06
 layout: default
 ---
-- [Tuning SOC Triage with GEPA: When More Isn’t Better](https://mini-knave-8da.notion.site/40f41a916dff81099e7fef7eab2724e6)
+- [Tuning SOC Triage with GEPA: When More Isn’t Better](https://mini-knave-8da.notion.site/40f41a916dff81099e7fef7eab2724e6) — <time datetime="2026-11-05">November 5, 2026</time>
 - [PageRank for DAGs](https://www.notion.so/PageRank-for-DAGs-23541a916dff80deb3e9f5b937ab59f2?source=copy_link)
 - [Direct Preference Optimization from the lens of Calculus of Variations](https://www.overleaf.com/read/ccqfngmvbqyb#1dae78)
 <!-- - [Needle: a minimalist auto-differentiation framework](https://github.com/marsplus/cmu-10741-needle/blob/main/needle_exp.ipynb) -->
