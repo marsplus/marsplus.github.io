@@ -1,0 +1,20 @@
+essays:
+  - title: "Tuning SOC triage with GEPA: when more isn’t better"
+    topic: Prompt optimization
+    description: What happened when we increased the tuning budget and used a stronger reflection model to improve a security triage prompt.
+    url: https://mini-knave-8da.notion.site/40f41a916dff81099e7fef7eab2724e6
+  # Local previews only until a public sharing URL is confirmed.
+  - title: How memory agents learn — and safely forget
+    topic: Agent memory
+    description: Turning analyst feedback into reusable knowledge, and removing its influence when the evidence changes.
+    url: https://app.notion.com/p/38941a916dff809d847be2985e54c62d
+    preview_only: true
+notes:
+  - title: PageRank for DAGs
+    url: https://www.notion.so/PageRank-for-DAGs-23541a916dff80deb3e9f5b937ab59f2?source=copy_link
+  - title: Direct preference optimization from the lens of calculus of variations
+    url: https://www.overleaf.com/read/ccqfngmvbqyb#1dae78
+  - title: Formulating a sorting problem as a linear program
+    url: https://www.overleaf.com/read/qstzxdqvhfts#7c894c
+  - title: Some notes I made when preparing for data science interviews
+    url: https://www.overleaf.com/read/jxkndxnfryqk

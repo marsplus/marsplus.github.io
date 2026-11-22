@@ -1,19 +1,34 @@
 name: Sixie Yu
-description: Personal website
-menu:
- - page: Research
-   url: /research
- # - page: Random Stuff
- #   url: /notes
- - page: Notes
-   url: /notes
-mathjax: true
-markdown: kramdown
-encoding: utf-8
-# baseurl: "marsplus.github.io"
+title: Sixie Yu
+description: Experiments, ideas, and lessons from building machine learning systems.
+url: "https://sixie-yu.org"
 baseurl: ""
 locale: en_GB
+encoding: utf-8
+markdown: kramdown
 mathjax: true
+menu:
+  - page: Blog
+    url: /
+  - page: About
+    url: /about
 sass:
   sass_dir: css
-  style:    expanded
+  style: expanded
+# Keep old generated copies and local drafts out of the published site.
+exclude:
+  - build
+  - server
+  - README.md
+  - LOCAL_PREVIEW.md
+  - LICENSE
+  - package.json
+  - docker-compose.yml
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - scripts
+  - header.html
+  - posts.md
+  - _posts/2022-09-20-Welcome.md
+  - _posts/2023-10-01-my-first-blog-post.md

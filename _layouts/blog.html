@@ -1,0 +1,27 @@
+---
+layout: site
+---
+<section class="intro">
+  <h1>Notes on AI,<br>security &amp; learning.</h1>
+</section>
+<section aria-label="Essays">
+  {% for essay in site.data.writing.essays %}
+  {% if essay.preview_only and jekyll.environment == 'production' %}{% continue %}{% endif %}
+  <article class="essay">
+    <p class="topic">{{ essay.topic | escape }}</p>
+    <div>
+      <h2><a href="{{ essay.url | escape }}">{{ essay.title | escape }}</a></h2>
+      <p class="summary">{{ essay.description | escape }}</p>
+      <a class="read-link" href="{{ essay.url | escape }}" aria-label="Read {{ essay.title | escape }}">Read the blog</a>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+<section class="technical-notes" aria-labelledby="technical-notes-title">
+  <h2 id="technical-notes-title">Technical notes</h2>
+  <ul>
+    {% for note in site.data.writing.notes %}
+    <li><a href="{{ note.url | escape }}">{{ note.title | escape }}</a></li>
+    {% endfor %}
+  </ul>
+</section>
