@@ -1,0 +1,376 @@
+---
+title: "Tuning SOC triage with GEPA: when more isn’t better"
+layout: essay
+section: blog
+topic: Prompt optimization
+date: 2026-11-05
+math: false
+permalink: /blog/tuning-soc-triage-with-gepa/
+description: What happened when we increased the tuning budget and used a stronger reflection model to improve a security triage prompt.
+---
+<h2 id="overview">Overview</h2>
+<p>A security case is a group of related alerts. These alerts can be parts of one incident. Example: failed logins, then a successful login, then a new mailbox rule, all for one user. An LLM reads the evidence for each case. Then it gives a verdict: real attack or false alarm.</p>
+<p>The LLM that gives the verdict is the <b>inference model</b>. A prompt tells this model how to make the verdict. GEPA is a method that improves this prompt automatically. GEPA uses a second LLM, the <b>reflection model</b>. The reflection model reads the errors of the inference model and writes a new version of the prompt. We use the reflection model only during tuning. We do not use it in production.</p>
+<p>GEPA improved the prompt. We then tested two settings: the tuning budget and the reflection model. The tuning budget sets an approximate limit on the number of scored agent runs during the search. Each run uses one candidate prompt to answer one case and can include several LLM calls and tool calls. The budget includes training and validation runs within GEPA, but excludes reflection model calls and separate evaluations after tuning. A larger budget gives GEPA more opportunities to propose and test prompt versions.</p>
+<p>The reflection model uses execution records and feedback to propose prompt changes, so a stronger model may produce better changes. However, larger budgets and stronger reflection models did not produce the gains we expected in our experiments.</p>
+<h3 id="key-findings">Key findings</h3>
+<ul>
+<li><b>GEPA helps.</b> The start prompt had only two sentences. Our production prompt was written by hand and had already been tuned in an earlier GEPA round for a previous inference model. GEPA found prompts that were 14–20 percentage points more accurate than the production prompt. These prompts found the same percentage of real attacks (true-positive recall).</li>
+<li><b>No single prompt is best.</b> Of all cases, 87% are false alarms, and their evidence is often similar to the evidence of real attacks. Thus, a prompt that finds more real attacks also flags many more false alarms, and its accuracy decreases. The best prompt depends on how many false alarms a SOC accepts to find one more real attack. This limit is different for each SOC, and it is usually unknown during tuning. A GEPA search score sets the relative cost of different errors, and each run returns one selected prompt. Thus, we run GEPA with several score weights and keep the set of best trade-offs (a Pareto frontier). The team that owns the trade-off then selects one prompt.</li>
+<li><b>More budget did not improve the frontier.</b> When we doubled the GEPA budget, the prompts usually got more accuracy and found fewer real attacks. We ran 27 setups with both budgets and kept all other settings the same. In 19 of the 27 setups, the larger budget found fewer true positives. The prompts from the larger budget were also longer. They also had more rules for the specific cases that we used for tuning.</li>
+<li><b>The strongest reflection model was not the best choice.</b> A reflection model with high reasoning made most of the best trade-offs when we compared only accuracy and recall. But each prompt from this model had rules for specific past cases.</li>
+<li><b>The cheapest setup gave good results.</b> In this setup, the inference model was also the reflection model. Reflection cost $0.71 for 18 tuning runs. With the strongest reflection model, reflection cost $90. In the middle of the trade-off, some prompts from the cheapest setup were among the best prompts of all setups.</li>
+</ul>
+<details class="article-contents">
+<summary>In this article</summary>
+<nav aria-label="Article contents"><ol><li><a href="#overview">Overview</a></li><li><a href="#the-problem-case-triage">The problem: case triage</a></li><li><a href="#why-an-llm-and-not-a-classifier">Why an LLM and not a classifier?</a></li><li><a href="#gepa-in-brief">GEPA in brief</a></li><li><a href="#experimental-setup">Experimental setup</a></li><li><a href="#question-1-how-much-budget">Question 1: How much budget?</a></li><li><a href="#question-2-which-reflection-model">Question 2: Which reflection model?</a></li><li><a href="#what-we-would-tell-another-team">What we would tell another team</a></li></ol></nav></details>
+<h2 id="the-problem-case-triage">The problem: case triage</h2>
+<p>Case triage decides if a person must act on a security case. A detection system makes thousands of alerts each day. Correlation logic puts related alerts into one group, called a case. Example: many failed logins from one IP address, then a successful login and a new inbox rule for the same user. An analyst who opens this case must answer one question: is this a real attack or a false alarm?</p>
+<p>We give each case one of these four verdicts:</p>
+<div aria-label="Case verdicts" class="table-scroll" role="region" tabindex="0"><table aria-label="Case verdicts" class="article-table text-table">
+<thead>
+<tr>
+<th scope="col">Verdict</th>
+<th scope="col">Meaning</th>
+<th scope="col">Usual next step</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">True Positive (TP)</th>
+<td>Malicious or unauthorized activity occurred</td>
+<td>Escalate and respond</td>
+</tr>
+<tr>
+<th scope="row">False Positive (FP)</th>
+<td>The detection triggered, but no bad activity occurred</td>
+<td>Close</td>
+</tr>
+<tr>
+<th scope="row">Benign True Positive (BTP)</th>
+<td>The activity occurred, but was expected, such as an admin script</td>
+<td>Close; possibly tune the rule</td>
+</tr>
+<tr>
+<th scope="row">Inconclusive</th>
+<td>The evidence is not sufficient for a verdict</td>
+<td>Send to an analyst</td>
+</tr>
+</tbody>
+</table></div><p class="table-scroll-hint">Swipe the table to see all columns.</p>
+<p>The verdict step does not read raw logs. Before this step, an alert-triage agent investigates each alert. For each observable in an alert, such as an IP address or a user, the agent does the checks that an analyst does. Examples:</p>
+<ul>
+<li>Were there suspicious login attempts from this IP address during the past day?</li>
+<li>Did the user add, change or delete inbox rules?</li>
+<li>Did the activity come from a managed device?</li>
+</ul>
+<p>Each check gives a <b>finding</b>: the observable, the question, a short text summary of the result, and the reasoning of the agent. The input to case triage is all the findings for all the alerts in the case, plus the case name and severity. This is a short example that we invented:</p>
+<figure class="article-figure">
+<a aria-label="View full-size image: Invented example case with two alerts and three findings that together point to an account takeover, leading to a true-positive verdict." class="figure-image" href="{{ '/assets/images/gepa-triage/02-example-case.png' | relative_url }}">
+<img alt="Invented example case with two alerts and three findings that together point to an account takeover, leading to a true-positive verdict." decoding="async" height="868" loading="lazy" src="{{ '/assets/images/gepa-triage/02-example-case.png' | relative_url }}" width="1344"/>
+</a>
+<figcaption>Invented example case with two alerts and three findings that together point to an account takeover, leading to a true-positive verdict. <a href="{{ '/assets/images/gepa-triage/02-example-case.png' | relative_url }}">View full-size image</a></figcaption>
+</figure>
+<p>The verdict step reads all three findings together. It gives JSON with the verdict and the reasoning.</p>
+<p>Real cases are larger. In our dataset, a case has 1 to 135 alerts (median 2). The median case has 14 findings and approximately 18,000 characters of evidence text.</p>
+<h2 id="why-an-llm-and-not-a-classifier">Why an LLM and not a classifier?</h2>
+<p>We use an LLM, not a conventional classifier, for the four reasons that follow.</p>
+<p><b>The input is text, not a feature vector.</b> The findings are text summaries from an upstream agent. The checks change with the alert type and its observables. A case can have 1 alert or 135 alerts. A classifier, for example gradient-boosted trees or logistic regression, needs a fixed set of columns. Thus, you must first convert all of this text into columns.</p>
+<p>Each new detection, data source or check changes this conversion. Thus, the maintenance of the feature pipeline becomes most of the work.</p>
+<p><b>The signal is in the combination, and this is where LLM reasoning is most useful.</b> Many failed logins from one IP address are normal by themselves. In the example above, the same IP then logs in as j.doe from an unmanaged device. Four minutes later, a new rule forwards mail to an external address. Together, these findings show an account takeover.</p>
+<p>To find this, the model must link findings that share an IP address or a user across alerts. It must put the events in time order. It must also read qualifiers such as "the connection was blocked" or "no suspicious traffic observed". Bag-of-words models and classifiers on text embeddings lose most of this structure. An LLM can do these steps and write them in its reasoning, where an analyst can check them.</p>
+<p><b>Environments differ, and pre-training knowledge carries over.</b> Each deployment has its own tools, naming conventions, normal behavior and alert mix. A classifier trained on the features of one environment knows only what its labels show. Thus, it transfers poorly, and a new environment does not yet have labels for retraining.</p>
+<p>An LLM learned a large amount of security knowledge during pre-training: common products and log formats, normal admin activity, and known attack techniques (for example, MITRE ATT&amp;CK). This knowledge is not specific to one environment, so it applies to a new environment immediately. The prompt only has to add general evidence rules. The parts that do not carry over are text that you can read and edit.</p>
+<p><b>Analysts must check the reasoning.</b> If a verdict closes a case, an analyst must compare the reason with the findings. The LLM gives this reason with the verdict. The policy itself, the prompt, is also text that people can read. Because of this, we can examine the tuned prompts for overfitting later in this post. For example, a rule such as "if the host name matches X, return FP" is easy to see.</p>
+<p>But an LLM also has disadvantages. Each decision costs more than with a tree model. The output can change between runs. By default, the LLM does not give a calibrated score.</p>
+<h2 id="gepa-in-brief">GEPA in brief</h2>
+<p>GEPA improves a prompt by editing its text. It does not change model weights. It was introduced in <a href="https://arxiv.org/abs/2507.19457">GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning</a> and is available as an optimizer in DSPy. GEPA first scores the start prompt on the validation set. Then it repeats these steps:</p>
+<ol>
+<li>Select a prompt from the candidate pool. Run it on a small batch of training cases (five in our runs).</li>
+<li>Score each output against its label. In our setup, the metric gives a number and a short text that explains the error.</li>
+<li>A <b>reflection model</b> reads the prompt, the cases, the outputs and the feedback. It finds possible causes of the errors and writes a revised prompt.</li>
+<li>Run the revised prompt on the same five cases. If its average score is better, score it on the full validation set and add it to the candidate pool.</li>
+<li>Select the next prompt to edit by looking for different strengths. By default, GEPA tracks which prompts get the best score on each validation case, including ties. It removes candidates whose winning cases are already covered by other candidates, then samples from the remaining candidates. A prompt with a lower average score can still be useful if it handles cases that the overall leader misses. Candidates that are best on more cases have a higher chance of selection. In our runs, GEPA used three measures instead of individual cases for this selection: the weighted score, TP recall and FP accuracy.</li>
+<li>Stop when the search reaches its approximate metric-call budget. One budget unit is one scored execution of the agent on one case. GEPA can finish an iteration after the count passes the budget. Return the prompt with the best average validation score.</li>
+</ol>
+<p>This process uses two model roles. The inference model runs the triage prompt during tuning and in production. The reflection model runs only during tuning. Its only effect on production is through the final prompt. The two roles can use the same LLM or different LLMs, and this post compares both options.</p>
+<figure class="article-figure">
+<a aria-label="View full-size image: Diagram: in production the inference model runs the triage prompt; during tuning, GEPA picks a parent prompt, runs it on 5 training cases, has the reflection model write a revision, and keeps it if it is better." class="figure-image" href="{{ '/assets/images/gepa-triage/03-gepa-loop.png' | relative_url }}">
+<img alt="Diagram: in production the inference model runs the triage prompt; during tuning, GEPA picks a parent prompt, runs it on 5 training cases, has the reflection model write a revision, and keeps it if it is better." decoding="async" height="862" loading="lazy" src="{{ '/assets/images/gepa-triage/03-gepa-loop.png' | relative_url }}" width="1344"/>
+</a>
+<figcaption>Diagram: in production the inference model runs the triage prompt; during tuning, GEPA picks a parent prompt, runs it on 5 training cases, has the reflection model write a revision, and keeps it if it is better. <a href="{{ '/assets/images/gepa-triage/03-gepa-loop.png' | relative_url }}">View full-size image</a></figcaption>
+</figure>
+<p>The inference model appears twice: once in production and once inside the loop. The reflection model appears only in the loop.</p>
+<p>GEPA fits case triage well. The policy is in the prompt. The score is computed directly from analyst labels, so no LLM judge is needed. In this experiment, we used a few hundred labeled cases for training. And the result is a prompt that a person can read and review before it ships.</p>
+<p>This post looks at two settings:</p>
+<ul>
+<li><b>Budget</b>: how many metric calls GEPA may spend. A metric call is one scored output on one case.</li>
+<li><b>Reflection model</b>: which LLM writes the revisions, and with how much reasoning.</li>
+</ul>
+<h2 id="experimental-setup">Experimental setup</h2>
+<p>We ran 54 GEPA searches on the same 983 labeled cases. We then scored all 63 prompts (54 tuned prompts plus 9 runs of the production prompt) on every case.</p>
+<p>The comparisons below use all 983 cases, including the training and validation cases. They describe the trade-offs within this dataset. They are not an independent estimate of performance on new cases.</p>
+<h3 id="data">Data</h3>
+<p>The dataset is 983 closed cases from one production environment. Each case carries the verdict of the analyst who closed it: 858 FP, 69 TP, 46 Inconclusive and 10 BTP. We used a fixed split. 491 training cases guide the edits, 295 validation cases choose the final prompt, and 197 were held back.</p>
+<p>A rule that always answers FP gets 87.28% accuracy and catches no true positives. Accuracy alone therefore rewards ignoring attacks, so we report two measures:</p>
+<ul>
+<li><b>Accuracy</b>: the share of all 983 cases that get the correct verdict. Because 87% of cases are FP, this mostly measures how many false positives are closed correctly, which means analyst workload.</li>
+<li><b>TP recall</b>: the share of the 69 true positives labeled TP, which means real incidents escalated.</li>
+</ul>
+<h3 id="experiment-settings">Experiment settings</h3>
+<div aria-label="Experiment settings" class="table-scroll" role="region" tabindex="0"><table aria-label="Experiment settings" class="article-table settings-table">
+<thead>
+<tr>
+<th scope="col">Setting</th>
+<th scope="col">Values tested</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">Inference model</th>
+<td>GPT-6-luna; reasoning: none, low, medium</td>
+</tr>
+<tr>
+<th scope="row">Reflection models</th>
+<td>GPT-6-astra: high reasoning; GPT-5.4: no reasoning; GPT-6-luna: reasoning matched to inference</td>
+</tr>
+<tr>
+<th scope="row">Budget</th>
+<td>Light: 1,560 metric calls; heavy: 3,100</td>
+</tr>
+<tr>
+<th scope="row">Search score</th>
+<td>Original, TP2, TP4</td>
+</tr>
+<tr>
+<th scope="row">Seed prompt</th>
+<td>The same 159 characters for every search</td>
+</tr>
+</tbody>
+</table></div>
+<p>We ran every combination of these settings: 3 reflection settings × 3 reasoning levels × 2 budgets × 3 search scores, which gives 54 searches. Each search starts from the seed: "Classify a security case based on alert triage findings…". A heavy search does not continue a light one. It starts again from the seed with about twice the budget.</p>
+<h3 id="what-gepa-optimizes">What GEPA optimizes</h3>
+<p>For every case, the metric returns a number and a sentence of feedback. Both come from the analyst's label; no LLM judge is used.</p>
+<p>The number comes from a fixed matrix that gives partial credit for some mistakes. Rows are the analyst's label, and columns are the model's verdict:</p>
+<div aria-label="Metric scores by analyst label and model verdict" class="table-scroll" role="region" tabindex="0"><table aria-label="Metric scores by analyst label and model verdict" class="article-table numeric-table">
+<thead>
+<tr>
+<th scope="col">Analyst label / Model verdict</th>
+<th scope="col">TP</th>
+<th scope="col">BTP</th>
+<th scope="col">FP</th>
+<th scope="col">Inconclusive</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">TP</th>
+<td>1.0</td>
+<td>0.1</td>
+<td>0.0</td>
+<td>0.1</td>
+</tr>
+<tr>
+<th scope="row">BTP</th>
+<td>0.7</td>
+<td>1.0</td>
+<td>0.6</td>
+<td>0.3</td>
+</tr>
+<tr>
+<th scope="row">FP</th>
+<td>0.4</td>
+<td>0.6</td>
+<td>1.0</td>
+<td>0.3</td>
+</tr>
+<tr>
+<th scope="row">Inconclusive</th>
+<td>0.5</td>
+<td>0.4</td>
+<td>0.2</td>
+<td>1.0</td>
+</tr>
+</tbody>
+</table></div><p class="table-scroll-hint">Swipe the table to see all columns.</p>
+<p>Output that fails schema validation scores 0. The TP2 and TP4 variants make two changes. First, a TP case earns credit only when the model answers TP, so BTP or Inconclusive no longer get 0.1. Second, every other mistake keeps only half or a quarter of its penalty. For example, an FP case called TP scores 0.7 under TP2 and 0.85 under TP4, instead of 0.4. <b>These changes make missed attacks more costly relative to mistakes on non-TP cases.</b> We varied the score this way on purpose, to move prompts along the accuracy–recall trade-off.</p>
+<p>The reflection model reads the feedback, along with the case evidence and the model's answer. The feedback gives the expected and predicted labels, the scores, and a fixed note for that type of mistake. Here is the feedback for a missed true positive in a TP4 run:</p>
+<figure class="article-figure">
+<a aria-label="View full-size image: Diagram of the feedback for a missed attack: the metric compares the verdict with the label and sends labels, scores and a fixed note to the reflection model, but not the analyst's reason." class="figure-image" href="{{ '/assets/images/gepa-triage/06-feedback.png' | relative_url }}">
+<img alt="Diagram of the feedback for a missed attack: the metric compares the verdict with the label and sends labels, scores and a fixed note to the reflection model, but not the analyst's reason." decoding="async" height="912" loading="lazy" src="{{ '/assets/images/gepa-triage/06-feedback.png' | relative_url }}" width="1344"/>
+</a>
+<figcaption>Diagram of the feedback for a missed attack: the metric compares the verdict with the label and sends labels, scores and a fixed note to the reflection model, but not the analyst's reason. <a href="{{ '/assets/images/gepa-triage/06-feedback.png' | relative_url }}">View full-size image</a></figcaption>
+</figure>
+<p>The feedback never includes the analyst's reason for the verdict, so the reflection model learns what went wrong but not why.</p>
+<p>On the 295 validation cases, the candidate pool tracks three objectives: the weighted score, TP recall (on TP cases only) and FP accuracy (on FP cases only). These measures guide which candidates GEPA selects for further editing. At the end, though, the run returns the prompt with the best average weighted score. Because the validation set is 87% FP, FP cases dominate that average. This matters for the budget result below.</p>
+<h3 id="baseline">Baseline</h3>
+<p>Our production prompt is about 13,000 characters. It was written by hand and then tuned in an earlier GEPA round for a previous inference model. We ran it at every reasoning level in every batch.</p>
+<h3 id="overfitting-review">Overfitting review</h3>
+<p>A tuned prompt can learn rules that fit only the cases it was tuned on, for example "if the host name is X, the verdict is FP". Such a rule can increase accuracy on our 983 cases, but it does not help on new cases. Accuracy cannot show this problem, so we examined the prompt text directly. Claude Opus 5.5 read each tuned prompt and gave it a rating from 0 to 5. The reviewer did not see the settings or the scores of the prompt. A rating of 0 means that the prompt has only general evidence rules. A rating of 5 means that the prompt mostly uses a long list of case patterns with fixed verdicts. In this post, we consider ratings of 4 and 5 as high risk.</p>
+<h3 id="why-compare-frontiers">Why compare frontiers</h3>
+<p>As we explained at the start, no single prompt is best for every SOC. Thus, we compare settings by their frontiers, not by their best single prompt. Prompt A <i>dominates</i> prompt B if A is at least as good on accuracy and TP recall, and better on one of them. The <i>Pareto frontier</i> is the set of prompts that no other prompt dominates. For each recall target, the frontier shows the best accuracy that we can get. There is also a second reason. The search score moves prompts along the trade-off. If we compared only the most accurate prompt of each setting, we could not tell if a setting tunes better or only selected a different trade-off. Note: this frontier is different from the Pareto front that GEPA uses inside its loop to select the next prompt to edit.</p>
+<h3 id="does-gepa-help-at-all-yes">Does GEPA help at all? Yes</h3>
+<p>With the same inference model and the same TP recall, the best GEPA prompts were 14–20 points more accurate than the production prompt. At low reasoning: 68.06% versus 54.22% accuracy, both at 47.83% recall. With no reasoning: 70.50% versus 50.15%, both at 49.28% recall. Part of this gain probably comes from fitting the prompt to the new inference model.</p>
+<h2 id="question-1-how-much-budget">Question 1: How much budget?</h2>
+<p>Doubling the budget did not consistently push the frontier outward. Instead, it usually moved prompts toward accuracy and produced longer prompts with higher overfitting-risk ratings. Across the three reflection settings, the heavy budget did not consistently improve the accuracy–recall trade-off.</p>
+<figure class="article-figure">
+<a aria-label="View full-size image: Three scatter plots of accuracy against true-positive recall, one per reflection model, showing that the heavy-budget frontier does not lie outside the light-budget frontier." class="figure-image" href="{{ '/assets/images/gepa-triage/07-budget-frontiers.png' | relative_url }}">
+<img alt="Three scatter plots of accuracy against true-positive recall, one per reflection model, showing that the heavy-budget frontier does not lie outside the light-budget frontier." decoding="async" height="770" loading="lazy" src="{{ '/assets/images/gepa-triage/07-budget-frontiers.png' | relative_url }}" width="1344"/>
+</a>
+<figcaption>Three scatter plots of accuracy against true-positive recall, one per reflection model, showing that the heavy-budget frontier does not lie outside the light-budget frontier. <a href="{{ '/assets/images/gepa-triage/07-budget-frontiers.png' | relative_url }}">View full-size image</a></figcaption>
+</figure>
+<p>The solid blue line is the light-budget frontier, and the dashed grey line is the heavy one. Crosses mark the production prompt. Under each panel, we put all 18 prompts of that setting together, find one frontier, and count how many of its prompts came from each budget.</p>
+<p>We compared each heavy search with the light search that used the same reflection model, reasoning level and search score. That gives 27 matched pairs:</p>
+<div aria-label="Matched light and heavy budget comparisons" class="table-scroll" role="region" tabindex="0"><table aria-label="Matched light and heavy budget comparisons" class="article-table numeric-table">
+<thead>
+<tr>
+<th scope="col">Measure</th>
+<th scope="col">Heavy better</th>
+<th scope="col">Light better</th>
+<th scope="col">Tie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">Accuracy</th>
+<td>18</td>
+<td>9</td>
+<td>0</td>
+</tr>
+<tr>
+<th scope="row">TP recall</th>
+<td>8</td>
+<td>19</td>
+<td>0</td>
+</tr>
+<tr>
+<th scope="row">Overfitting risk (lower is better)</th>
+<td>2</td>
+<td>12</td>
+<td>13</td>
+</tr>
+</tbody>
+</table></div><p class="table-scroll-hint">Swipe the table to see all columns.</p>
+<p>The heavy search usually gained accuracy and lost recall. That is a move along the frontier, not beyond it. These are 27 single runs, so read this as a consistent tilt, not proof: a two-sided sign test on 19 of 27 gives p ≈ 0.05.</p>
+<p>The frontiers show the same thing from another angle:</p>
+<ul>
+<li><b>GPT-6-astra reflection:</b> The combined frontier has 4 light and 4 heavy prompts. Heavy prompts fill the middle; light prompts hold both ends.</li>
+<li><b>GPT-5.4 reflection:</b> The combined frontier has 2 light and 3 heavy prompts. Heavy holds the high-accuracy end (81.18%). Light holds the high-recall end (71.01%, the highest recall in the study).</li>
+<li><b>Matched Luna reflection:</b> A light prompt dominates every heavy frontier prompt, so the combined frontier is all light.</li>
+</ul>
+<p>Heavier searches also produced longer prompts. From light to heavy, the median tuned-prompt length grew from 38K to 45K characters with GPT-6-astra reflection. It grew from 11.2K to 12.7K with GPT-5.4, and from 7.4K to 10.1K with matched Luna. More iterations give the search more chances to add a rule that fixes one training case, and the overfitting ratings rose to match.</p>
+<p>Our explanation for why the extra budget goes to accuracy: GEPA keeps the candidate with the best average validation score. With 87% FP cases, FP cases dominate that average, even when the search score weights missed TPs more heavily. A longer search finds more edits that win FP cases, and selection on the average keeps them.</p>
+<p><b>What we would do:</b> start with a light budget. If you have more to spend, spend it on breadth: more search scores, reasoning levels or random seeds. One heavy run costs about as much as two light runs. Two light runs with different search scores give you two frontier points, not one.</p>
+<h2 id="question-2-which-reflection-model">Question 2: Which reflection model?</h2>
+<p>No reflection setting's frontier dominates the others; the frontiers cross. Once overfitting risk and cost are counted, though, the strong high-reasoning reflector drops out. The inference model reflecting on its own errors is competitive at less than 1% of that reflector's cost.</p>
+<figure class="article-figure">
+<a aria-label="View full-size image: Two scatter plots comparing the three reflection models' frontiers, for all prompts and for prompts rated 3 or lower for overfitting; the strongest reflector has no prompts left after the cap." class="figure-image" href="{{ '/assets/images/gepa-triage/09-reflection-frontiers.png' | relative_url }}">
+<img alt="Two scatter plots comparing the three reflection models' frontiers, for all prompts and for prompts rated 3 or lower for overfitting; the strongest reflector has no prompts left after the cap." decoding="async" height="854" loading="lazy" src="{{ '/assets/images/gepa-triage/09-reflection-frontiers.png' | relative_url }}" width="1344"/>
+</a>
+<figcaption>Two scatter plots comparing the three reflection models' frontiers, for all prompts and for prompts rated 3 or lower for overfitting; the strongest reflector has no prompts left after the cap. <a href="{{ '/assets/images/gepa-triage/09-reflection-frontiers.png' | relative_url }}">View full-size image</a></figcaption>
+</figure>
+<p>The right panel removes the high-risk prompts: those with an overfitting rating of 4 or 5 (see the overfitting review in the setup). It keeps only the prompts rated 3 or lower. None of the GPT-6-astra prompts qualifies, so that setting has no prompts left on the frontier. Under each panel, we put all the prompts of that panel together, find one frontier, and count how many of its prompts came from each reflection model.</p>
+<p><b>Without constraints, the frontiers cross.</b> Across all 63 prompts, the combined frontier has 11 prompts: 7 from GPT-6-astra, 2 from GPT-5.4 and 2 from matched Luna. GPT-6-astra reaches the highest accuracy (81.69%) and GPT-5.4 the highest recall (71.01%). Matched Luna has two frontier points in the middle. No other setting beats more than 2 of the points on any setting's frontier.</p>
+<h3 id="the-strong-reflector-writes-a-different-kind-of-prompt">The strong reflector writes a different kind of prompt</h3>
+<p><b>Cost across the three reflection settings</b></p>
+<div aria-label="Cost across the three reflection settings" class="table-scroll" role="region" tabindex="0"><table aria-label="Cost across the three reflection settings" class="article-table numeric-table">
+<thead>
+<tr>
+<th scope="col">Reflection setting</th>
+<th scope="col">Reflection spend</th>
+<th scope="col">Total spend</th>
+<th scope="col">Inference cost per case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">GPT-6-astra · high</th>
+<td>$90.00</td>
+<td>$177.24</td>
+<td>$0.0015</td>
+</tr>
+<tr>
+<th scope="row">GPT-5.4 · none</th>
+<td>$14.34</td>
+<td>$64.56</td>
+<td>$0.0008</td>
+</tr>
+<tr>
+<th scope="row">GPT-6-luna · matched</th>
+<td>$0.71</td>
+<td>$46.94</td>
+<td>$0.0007</td>
+</tr>
+</tbody>
+</table></div><p class="table-scroll-hint">Swipe the table to see all columns.</p>
+<p><b>Prompt length and overfitting ratings</b></p>
+<p>Ratings show the rating followed by the number of prompts. Each setting produced 18 prompts.</p>
+<div aria-label="Prompt length and overfitting ratings" class="table-scroll" role="region" tabindex="0"><table aria-label="Prompt length and overfitting ratings" class="article-table numeric-table">
+<thead>
+<tr>
+<th scope="col">Reflection setting</th>
+<th scope="col">Median prompt length</th>
+<th scope="col">Overfitting ratings</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">GPT-6-astra · high</th>
+<td>40K characters</td>
+<td>4 × 14; 5 × 4</td>
+</tr>
+<tr>
+<th scope="row">GPT-5.4 · none</th>
+<td>12K characters</td>
+<td>1 × 1; 2 × 10; 3 × 7</td>
+</tr>
+<tr>
+<th scope="row">GPT-6-luna · matched</th>
+<td>9K characters</td>
+<td>2 × 11; 3 × 6; 4 × 1</td>
+</tr>
+</tbody>
+</table></div><p class="table-scroll-hint">Swipe the table to see all columns.</p>
+<p><b>Prompts on the combined frontier</b></p>
+<div aria-label="Prompts on the combined frontier" class="table-scroll" role="region" tabindex="0"><table aria-label="Prompts on the combined frontier" class="article-table numeric-table">
+<thead>
+<tr>
+<th scope="col">Reflection setting</th>
+<th scope="col">All prompts</th>
+<th scope="col">Risk rating ≤ 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">GPT-6-astra · high</th>
+<td>7</td>
+<td>0</td>
+</tr>
+<tr>
+<th scope="row">GPT-5.4 · none</th>
+<td>2</td>
+<td>4</td>
+</tr>
+<tr>
+<th scope="row">GPT-6-luna · matched</th>
+<td>2</td>
+<td>3</td>
+</tr>
+</tbody>
+</table></div><p class="table-scroll-hint">Swipe the table to see all columns.</p>
+<p>Total spend covers the 18 searches plus scoring all 21 variants on all 983 cases. Inference cost per case is the mean recorded cost across the 18 tuned prompts. The production prompt costs about $0.0007–$0.0008 per case.</p>
+<p>GPT-6-astra's prompts are 3–4× longer than the others and 3× longer than our hand-written production prompt. As a result, every production verdict would cost about twice as much. All 18 of its prompts were rated 4 or 5, because their verdict logic depends on lists of specific case patterns. A strong reasoning reflector is very good at writing a rule for each training failure it sees. Those rules score well on the 983 cases we already have, but we trust them least on new cases.</p>
+<p><b>With a risk cap, the strong reflector has no prompts on the frontier.</b> If you only allow prompts rated 3 or lower, no GPT-6-astra prompt qualifies. GPT-5.4 then holds both ends (81.18% accuracy; 71.01% recall), and matched Luna holds much of the middle. With a cap of 2, the frontier has three GPT-5.4 prompts and three matched-Luna prompts.</p>
+<p><b>Matched reflection is a sensible cheap default.</b> We let the inference model reflect on its own errors, at its own reasoning level. Reflection cost $0.71 across 18 searches, about 1/127 of the GPT-6-astra cost. It wrote the shortest prompts, and most were rated 2. It did not reach either extreme: its best accuracy was 77.21% and its best recall 63.77%. It was also the setting where the heavy budget hurt most. GPT-5.4 without reasoning reached both extremes, with ratings from 1 to 3.</p>
+<p>So, should the reflection model be the inference model? It is a good place to start: cheap, low-risk, and competitive where most operating points will sit. If you need either end of the trade-off, try one other inexpensive reflector. Do not assume the strongest reflection model is the right choice.</p>
+<p><b>What this does not show.</b> Each setting changed both the model and the reasoning effort, and each search ran once. So we cannot tell whether GPT-6-astra's behavior comes from the model or from high reasoning. What we can say is that the most capable and most expensive reflection setup was not the best choice for a prompt we intend to ship.</p>
+<h2 id="what-we-would-tell-another-team">What we would tell another team</h2>
+<ol>
+<li><b>Report a frontier, not a single winner.</b> Vary the search score, meaning how much a missed true positive costs, to trace the trade-off. Before you look at the results, decide the minimum TP recall you need. Then choose the most accurate prompt that meets it.</li>
+<li><b>Start with a light budget, and spend any extra on breadth.</b> Two light searches with different settings taught us more than one heavy search.</li>
+<li><b>Try the inference model as its own reflector first.</b> It is cheap and kept prompts short and general. If you need either end of the trade-off, add one other inexpensive reflector.</li>
+<li><b>Gate on overfitting as well as scores.</b> A blind LLM review of the prompt text against a short rubric is cheap, and it caught a problem that accuracy did not show. Prompt length is a useful early warning sign.</li>
+<li><b>Count inference cost.</b> The reflection model writes your production prompt. Long prompts made every verdict cost about twice as much.</li>
+<li><b>Do not judge on accuracy alone when false positives dominate.</b> In our data, always answering FP gives 87.28% accuracy and catches no attacks.</li>
+<li><b>Make the final decision on new cases.</b> Results on cases you have already used are good for choosing candidates. They are not a measure of production performance.</li>
+</ol>

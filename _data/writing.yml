@@ -1,12 +1,15 @@
 essays:
   - title: PageRank for DAGs
+    # First linked on the website in commit ee1023b.
+    date: "2025-07-18"
     topic: Graph algorithms
     description: How a topological order turns PageRank into a single pass, with careful handling of dangling nodes.
     url: /blog/pagerank-for-dags/
   - title: "Tuning SOC triage with GEPA: when more isn’t better"
+    date: "2026-11-05"
     topic: Prompt optimization
     description: What happened when we increased the tuning budget and used a stronger reflection model to improve a security triage prompt.
-    url: https://mini-knave-8da.notion.site/40f41a916dff81099e7fef7eab2724e6
+    url: /blog/tuning-soc-triage-with-gepa/
   # Local previews only until a public sharing URL is confirmed.
   - title: How memory agents learn — and safely forget
     topic: Agent memory
@@ -15,8 +18,14 @@ essays:
     preview_only: true
 notes:
   - title: Direct preference optimization from the lens of calculus of variations
+    # First linked on the website in commit 83d6baa.
+    date: "2025-01-04"
     url: https://www.overleaf.com/read/ccqfngmvbqyb#1dae78
   - title: Formulating a sorting problem as a linear program
+    # First linked on the website in commit 7064b37.
+    date: "2025-01-19"
     url: https://www.overleaf.com/read/qstzxdqvhfts#7c894c
   - title: Some notes I made when preparing for data science interviews
+    # First linked on the website in commit 1e9b077.
+    date: "2023-08-12"
     url: https://www.overleaf.com/read/jxkndxnfryqk

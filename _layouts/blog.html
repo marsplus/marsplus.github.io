@@ -5,7 +5,10 @@ layout: site
   <h1>Notes on AI,<br>security &amp; learning.</h1>
 </section>
 <section aria-label="Essays">
-  {% for essay in site.data.writing.essays %}
+  {% assign dated_essays = site.data.writing.essays | where_exp: "item", "item.date != nil" | sort: 'date' | reverse %}
+  {% assign undated_essays = site.data.writing.essays | where_exp: "item", "item.date == nil" %}
+  {% assign ordered_essays = dated_essays | concat: undated_essays %}
+  {% for essay in ordered_essays %}
   {% if essay.preview_only and jekyll.environment == 'production' %}{% continue %}{% endif %}
   {% assign essay_url = essay.url %}
   {% unless essay_url contains '://' %}{% assign essay_url = essay_url | relative_url %}{% endunless %}
@@ -22,7 +25,10 @@ layout: site
 <section class="technical-notes" aria-labelledby="technical-notes-title">
   <h2 id="technical-notes-title">Technical notes</h2>
   <ul>
-    {% for note in site.data.writing.notes %}
+    {% assign dated_notes = site.data.writing.notes | where_exp: "item", "item.date != nil" | sort: 'date' | reverse %}
+    {% assign undated_notes = site.data.writing.notes | where_exp: "item", "item.date == nil" %}
+    {% assign ordered_notes = dated_notes | concat: undated_notes %}
+    {% for note in ordered_notes %}
     <li><a href="{{ note.url | escape }}">{{ note.title | escape }}</a></li>
     {% endfor %}
   </ul>
