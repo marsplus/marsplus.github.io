@@ -47,6 +47,11 @@ h1, h2, h3, p { margin: 0; }
 .about h1, .about h2 { color: var(--ink); }
 .about .lead { font-size: 1.4375rem; line-height: 1.5; color: var(--ink); margin-bottom: 22px; }
 .about h2 { font-size: 1rem; }
+.about-intro { display: grid; grid-template-columns: minmax(0, 1fr) 160px; gap: 28px; align-items: start; margin-bottom: 24px; }
+.about-intro-text { grid-column: 1; grid-row: 1; min-width: 0; }
+.about-intro-text > p:last-child { margin-bottom: 0; }
+.about .about-portrait { grid-column: 2; grid-row: 1; width: 160px; height: auto; border-radius: 6px; }
+
 .prose img, .prose video { max-width: 100%; height: auto; }
 .prose iframe { max-width: 100%; }
 .prose pre { max-width: 100%; overflow-x: auto; padding: 16px; border: 1px solid var(--rule); }
@@ -104,6 +109,10 @@ h1, h2, h3, p { margin: 0; }
   .topic { padding: 0; }
   .technical-notes { grid-template-columns: 1fr; gap: 15px; }
   .prose { padding-top: 40px; }
+  .about-intro { grid-template-columns: 1fr; gap: 24px; }
+  .about .about-portrait { grid-column: 1; grid-row: 1; }
+  .about-intro-text { grid-column: 1; grid-row: 2; }
+
   .prose h1 { font-size: 2.625rem; }
   .essay-header h1 { font-size: 2.25rem; }
   .essay-header .essay-deck { font-size: 1.125rem; }
