@@ -17,14 +17,6 @@ essays:
     url: https://app.notion.com/p/38941a916dff809d847be2985e54c62d
     preview_only: true
 notes:
-  - title: Direct preference optimization from the lens of calculus of variations
-    # First linked on the website in commit 83d6baa.
-    date: "2025-01-04"
-    url: https://www.overleaf.com/read/ccqfngmvbqyb#1dae78
-  - title: Formulating a sorting problem as a linear program
-    # First linked on the website in commit 7064b37.
-    date: "2025-01-19"
-    url: https://www.overleaf.com/read/qstzxdqvhfts#7c894c
   - title: Some notes I made when preparing for data science interviews
     # First linked on the website in commit 1e9b077.
     date: "2023-08-12"
