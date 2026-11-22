@@ -55,6 +55,18 @@ h1, h2, h3, p { margin: 0; }
 .prose blockquote { margin: 24px 0; padding-left: 20px; border-left: 2px solid var(--rule); color: var(--quiet); }
 .skip-link { position: absolute; left: 16px; top: -100px; background: var(--paper); padding: 8px; }
 .skip-link:focus { top: 8px; }
+.native-essay { margin: 0 auto; }
+.essay-header { border-bottom: 1px solid var(--rule); margin-bottom: 32px; padding-bottom: 28px; }
+.essay-header .essay-topic { color: var(--quiet); font-size: .875rem; margin-bottom: 12px; }
+.essay-header h1 { font-size: 2.75rem; margin-bottom: 16px; }
+.essay-header .essay-deck { color: var(--quiet); font-size: 1.1875rem; max-width: 620px; }
+.essay-header .essay-byline { color: var(--quiet); font-size: .875rem; margin-bottom: 0; }
+.essay-body { font-size: 1.0625rem; line-height: 1.75; min-width: 0; }
+.essay-body h2 { margin-top: 44px; font-size: 1.375rem; }
+.equation { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: 12px 2px 16px; margin: 20px 0 24px; }
+.equation mjx-container[display="true"] { margin: 0 !important; text-align: left !important; }
+.native-essay .essay-references { font-size: 1rem; }
+.native-essay .back-to-blog { margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--rule); font-size: .9375rem; }
 @media (max-width: 650px) {
   .site { padding: 0 25px 40px; }
   .site-header { padding: 20px 0; }
@@ -67,6 +79,8 @@ h1, h2, h3, p { margin: 0; }
   .technical-notes { grid-template-columns: 1fr; gap: 15px; }
   .prose { padding-top: 40px; }
   .prose h1 { font-size: 2.625rem; }
+  .essay-header h1 { font-size: 2.25rem; }
+  .essay-header .essay-deck { font-size: 1.125rem; }
 }
 @media (pointer: coarse) {
   .site-name, .read-link, .technical-notes a { min-height: 44px; display: inline-flex; align-items: center; }

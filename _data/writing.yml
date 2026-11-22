@@ -1,4 +1,8 @@
 essays:
+  - title: PageRank for DAGs
+    topic: Graph algorithms
+    description: How a topological order turns PageRank into a single pass, with careful handling of dangling nodes.
+    url: /blog/pagerank-for-dags/
   - title: "Tuning SOC triage with GEPA: when more isn’t better"
     topic: Prompt optimization
     description: What happened when we increased the tuning budget and used a stronger reflection model to improve a security triage prompt.
@@ -10,8 +14,6 @@ essays:
     url: https://app.notion.com/p/38941a916dff809d847be2985e54c62d
     preview_only: true
 notes:
-  - title: PageRank for DAGs
-    url: https://www.notion.so/PageRank-for-DAGs-23541a916dff80deb3e9f5b937ab59f2?source=copy_link
   - title: Direct preference optimization from the lens of calculus of variations
     url: https://www.overleaf.com/read/ccqfngmvbqyb#1dae78
   - title: Formulating a sorting problem as a linear program

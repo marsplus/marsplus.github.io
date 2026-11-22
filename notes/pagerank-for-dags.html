@@ -1,0 +1,122 @@
+---
+title: PageRank for DAGs
+layout: essay
+section: blog
+topic: Graph algorithms
+math: true
+permalink: /blog/pagerank-for-dags/
+description: A topological order turns repeated updates into a single pass. The key is handling nodes with no outgoing edges correctly.
+---
+<p>PageRank is usually computed by updating every node’s score again and again. On a directed acyclic graph, or DAG, there is a simpler route: process the nodes in topological order, then normalize the scores.</p>
+<p>The result is an \(O(N + E)\) algorithm. There is one important condition: we must specify what happens when the random walk reaches a node with no outgoing edges.</p>
+
+<h2 id="random-walk">Start with the random walk</h2>
+<p>The intuition behind PageRank is recursive: a node is important when important nodes link to it. A random walk turns that idea into a probability distribution.</p>
+<p>Let the graph have \(N &gt; 0\) nodes and \(E\) directed edges. Let \(d_j\) be the number of outgoing edges from node \(j\). We use a <strong>column convention</strong>: the entry \(M_{ij}\) describes a step from node \(j\) to node \(i\).</p>
+<div class="equation" role="region" aria-label="Definition of the link transition matrix" tabindex="0">
+\[
+M_{ij} =
+\begin{cases}
+\dfrac{1}{d_j} &amp; \text{if } j \to i,\\[4pt]
+0 &amp; \text{otherwise}.
+\end{cases}
+\]
+</div>
+<p>If a node has three outgoing edges, each gets one third of its outgoing probability. If it has no outgoing edges, its column in \(M\) is zero. Such a node is called a <em>dangling node</em>, or a sink.</p>
+<p>Choose a damping factor \(0 &lt; \alpha &lt; 1\). At a node with outgoing edges, follow a random edge with probability \(\alpha\), and jump to a uniformly chosen node with probability \(1-\alpha\). At a dangling node, jump to a uniformly chosen node. This is the usual uniform-teleportation, uniform-dangling convention.</p>
+<p>Write \(\mathbf v = \frac{1}{N}\mathbf 1\). Let \(s_j=1\) for a dangling node and \(s_j=0\) otherwise. The full transition matrix is</p>
+<div class="equation" role="region" aria-label="Transition matrix including dangling nodes" tabindex="0">
+\[
+P = M + \mathbf v\mathbf s^\top.
+\]
+</div>
+<p>Every column of \(P\) sums to one. The PageRank vector is the stationary distribution:</p>
+<div class="equation" role="region" aria-label="PageRank fixed-point equation" tabindex="0">
+\[
+\mathbf r = \alpha P\mathbf r + (1-\alpha)\mathbf v,
+\qquad
+\mathbf 1^\top\mathbf r = 1.
+\]
+</div>
+<p>With our column convention, the product is \(P\mathbf r\), not \(P^\top\mathbf r\). A common solver uses power iteration:</p>
+<div class="equation" role="region" aria-label="Power iteration update" tabindex="0">
+\[
+\mathbf r^{(t+1)}
+= \alpha P\mathbf r^{(t)} + (1-\alpha)\mathbf v.
+\]
+</div>
+<p>For a sparse graph, each update costs \(O(N+E)\). Running \(k\) updates costs \(O(k(N+E))\). A DAG lets us avoid those repeated updates.</p>
+
+<h2 id="topological-order">What the DAG gives us</h2>
+<p>A DAG has no directed cycles. Its nodes can be placed in a <em>topological order</em> \(v_1,\ldots,v_N\), so every edge \(v_i\to v_j\) satisfies \(i&lt;j\).</p>
+<p>With destination rows and source columns, this makes \(M\) strictly lower triangular:</p>
+<div class="equation" role="region" aria-label="Lower triangular link matrix in topological order" tabindex="0">
+\[
+M =
+\begin{bmatrix}
+0 &amp; 0 &amp; 0 &amp; \cdots &amp; 0\\
+M_{21} &amp; 0 &amp; 0 &amp; \cdots &amp; 0\\
+M_{31} &amp; M_{32} &amp; 0 &amp; \cdots &amp; 0\\
+\vdots &amp; \vdots &amp; \vdots &amp; \ddots &amp; \vdots\\
+M_{N1} &amp; M_{N2} &amp; M_{N3} &amp; \cdots &amp; 0
+\end{bmatrix}.
+\]
+</div>
+<p>Each node receives contributions only from earlier nodes. The catch is that \(P\) is not triangular: the dangling-node jumps can point anywhere. We therefore solve a simpler triangular system first.</p>
+
+<h2 id="single-pass">Compute scores in one pass</h2>
+<p>Define an intermediate vector \(\mathbf q\) using the original edges only:</p>
+<div class="equation" role="region" aria-label="Intermediate scores before normalization" tabindex="0">
+\[
+\mathbf q = (1-\alpha)\mathbf v + \alpha M\mathbf q.
+\]
+</div>
+<p>These are not yet normalized PageRank probabilities. In topological order, compute each entry as</p>
+<div class="equation" role="region" aria-label="One-pass recurrence for each node" tabindex="0">
+\[
+q_i = \frac{1-\alpha}{N}
++ \alpha\sum_{j:\,j\to i}\frac{q_j}{d_j}.
+\]
+</div>
+<p>The denominator is \(d_j\), the outgoing degree of the <strong>source</strong> node. Every \(q_j\) in the sum is already known. A node with no incoming edges starts with \((1-\alpha)/N\).</p>
+<p>After processing all nodes, normalize once:</p>
+<div class="equation" role="region" aria-label="Normalize the scores to obtain PageRank" tabindex="0">
+\[
+Z=\sum_{i=1}^{N}q_i,
+\qquad
+r_i=\frac{q_i}{Z}.
+\]
+</div>
+<p>This gives the PageRank distribution for the random walk defined above. It needs one pass over the edges, plus a pass over the nodes to normalize.</p>
+
+<h2 id="normalization">Why normalization handles the sinks</h2>
+<p>Let \(D=\mathbf s^\top\mathbf r\) be the total PageRank probability at dangling nodes. Expanding the full PageRank equation gives</p>
+<div class="equation" role="region" aria-label="PageRank with dangling probability separated out" tabindex="0">
+\[
+\mathbf r
+=\alpha M\mathbf r
++\bigl((1-\alpha)+\alpha D\bigr)\mathbf v.
+\]
+</div>
+<p>Both teleportation and dangling-node jumps use the same vector \(\mathbf v\). Together, they add one common scale factor to that vector.</p>
+<p>Since \(M\) is strictly lower triangular, \(I-\alpha M\) is invertible. Both \(\mathbf r\) and \(\mathbf q\) are therefore scalar multiples of the same vector:</p>
+<div class="equation" role="region" aria-label="Common vector underlying the two score systems" tabindex="0">
+\[
+\begin{aligned}
+\mathbf q &amp;= (1-\alpha)(I-\alpha M)^{-1}\mathbf v,\\
+\mathbf r &amp;= \bigl((1-\alpha)+\alpha D\bigr)
+(I-\alpha M)^{-1}\mathbf v.
+\end{aligned}
+\]
+</div>
+<p>Normalizing \(\mathbf q\) selects the multiple whose entries sum to one. That is \(\mathbf r\). No matrix inverse needs to be formed in code; the topological pass solves the triangular system directly.</p>
+<p><strong>The sink rule matters.</strong> If dangling nodes keep their probability through self-loops, or redistribute it using a different vector, this normalization argument no longer applies unchanged. The same derivation does work with a nonuniform personalization vector, provided teleportation and dangling-node redistribution both use that vector.</p>
+
+<h2 id="takeaway">The useful distinction</h2>
+<p>The DAG structure makes the <em>link-only</em> system triangular. The sink policy tells us how to turn its solution into PageRank. With matching teleportation and dangling-node distributions, the recipe is simple: compute in topological order, then normalize.</p>
+
+<h2 id="references">References</h2>
+<ul class="essay-references">
+  <li><a href="https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.link_analysis.pagerank_alg.pagerank.html">NetworkX PageRank documentation</a>, including its default dangling-node convention.</li>
+  <li><a href="https://cstheory.stackexchange.com/questions/50507/pagerank-in-directed-acyclic-graphs-dag">PageRank in directed acyclic graphs</a>, the discussion linked in the original note.</li>
+</ul>

@@ -1,0 +1,13 @@
+---
+layout: site
+---
+<article class="prose native-essay">
+  <header class="essay-header">
+    <p class="essay-topic">{{ page.topic | escape }}</p>
+    <h1>{{ page.title | escape }}</h1>
+    {% if page.description %}<p class="essay-deck">{{ page.description | escape }}</p>{% endif %}
+    <p class="essay-byline">{{ site.name | escape }}{% if page.date %} · <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%B %-d, %Y" }}</time>{% endif %}{% if jekyll.environment != 'production' %} · Preview{% endif %}</p>
+  </header>
+  <div class="essay-body">{{ content }}</div>
+  <p class="back-to-blog"><a href="{{ '/' | relative_url }}">Back to the blog</a></p>
+</article>
