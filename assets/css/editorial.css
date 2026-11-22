@@ -26,6 +26,7 @@ h1, h2, h3, p { margin: 0; }
 .intro h1 { font: 400 3.4375rem/1.06 var(--font-text); letter-spacing: -.02em; max-width: 650px; }
 .intro p { color: var(--quiet); margin-top: 18px; max-width: 550px; }
 .essay { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 24px; border-top: 1px solid var(--rule); padding: 30px 0; }
+.essay-list > .essay:first-of-type { border-top: 0; }
 .topic { color: var(--quiet); font-size: .875rem; padding-top: 6px; }
 .essay h2 { font: 400 2rem/1.2 var(--font-text); letter-spacing: -.008em; max-width: 610px; }
 .essay .summary { color: var(--quiet); margin-top: 13px; max-width: 570px; }

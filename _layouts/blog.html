@@ -1,10 +1,7 @@
 ---
 layout: site
 ---
-<section class="intro">
-  <h1>Notes on AI,<br>security &amp; learning.</h1>
-</section>
-<section aria-label="Essays">
+<section class="essay-list" aria-label="Essays">
   {% assign dated_essays = site.data.writing.essays | where_exp: "item", "item.date != nil" | sort: 'date' | reverse %}
   {% assign undated_essays = site.data.writing.essays | where_exp: "item", "item.date == nil" %}
   {% assign ordered_essays = dated_essays | concat: undated_essays %}
