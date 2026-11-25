@@ -9,7 +9,7 @@ description: Lessons from building production agent systems. Research in adversa
     <img class="about-portrait" src="{{ '/assets/images/img.jpg' | relative_url }}" alt="Portrait of Sixie Yu" width="256" height="315" decoding="async">
     <div class="about-intro-text">
   <h1>Hi, I’m Sixie.</h1>
-  <p class="lead">I work on machine learning for security at <a href="https://stellarcyber.ai/">Stellar Cyber</a>.</p>
+  <p class="lead">I work on AI for security at <a href="https://stellarcyber.ai/">Stellar Cyber</a>.</p>
   <p>I write about what I learn while building production agent systems.</p>
     </div>
   </div>
